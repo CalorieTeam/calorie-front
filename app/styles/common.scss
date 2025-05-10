@@ -1,0 +1,36 @@
+
+header {  
+  background: #f8fafc; 
+  background-color: #f8fafc;
+  padding: 1.2rem 14px;
+  text-align: center;
+    
+  h1 {
+    font-size: 1rem;
+    font-weight: bold;
+    color: #222;
+    letter-spacing: -1px;
+    text-align: center;
+  }
+
+}
+
+footer {
+  position: fixed;
+  z-index: 1;
+  bottom:0;
+  left:0;
+  width: 100%;
+  border-top: 1px solid #eee;
+  color: var(--foreground);
+  padding: 1.2rem 1.7rem;
+  text-align: center;
+  display: flex;
+  justify-content: space-between; 
+  a{
+    color: #333;
+    text-decoration: none;
+    font-size: 1rem;
+    font-weight: 400; 
+  }
+} 
