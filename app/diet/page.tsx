@@ -1,5 +1,4 @@
-'use client'; // 이건 브라우저에서 동작하는 컴포넌트라는 의미야
-
+'use client'; 
 import { useState } from 'react';
 import { initialMemos } from '../mock/memos'; // 경로 주의
 import '@/app/styles/common.scss';   // 추가된 공통 SCSS 파일
@@ -12,7 +11,7 @@ type Memo = {
   text: string;
 };
 
-export default function Home() {
+export default function Diet() {
   const [memo, setMemo] = useState(''); // 메모 입력값
   const [memoList, setMemoList] = useState<Memo[]>(initialMemos);
   const handleSubmit = (e: React.FormEvent) => {
