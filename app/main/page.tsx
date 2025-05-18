@@ -2,26 +2,32 @@
 import { useEffect } from "react";
 import Header from "@/components/Header"; 
 import Footer from "@/components/Footer";
-
+import { useRouter } from "next/navigation";
 
 export default function Main() { 
+  const router = useRouter();
   function checkLogin() {
-    const token = localStorage.getItem("token") || sessionStorage.getItem("token");
-    if (!token) {
-      // 로그인 정보 없으면 로그인 페이지로 이동
-      window.location.href = "/login";
-    } else {
-      // 토큰이 있으면 메인 페이지 유지
-      console.log("로그인 상태 유지 중", token);
+    const accessToken = localStorage.getItem("accessToken") || sessionStorage.getItem("accessToken");
+    if (!accessToken) { 
+      router.replace("/login"); 
+    } else { 
+      console.log("로그인 상태 유지 중", accessToken);
     }
   }
   useEffect(() => {
     checkLogin();
   }, []);
+
+  function handleLogout() {
+    localStorage.removeItem("accessToken"); 
+    localStorage.removeItem("refreshToken");   
+    router.replace("/login"); 
+  }
+  
   return (
     <>
       <Header title="메인" />
-      <button onClick={() => {localStorage.removeItem('token');window.location.href = "/login";}}>토큰 삭제</button>
+      <button onClick={handleLogout}>토큰 삭제</button>
       <Footer />
     </>
   );

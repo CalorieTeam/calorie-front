@@ -1,36 +1,47 @@
 'use client'; 
 import { useState } from 'react';
-import { members } from '../mock/members';
+import { members } from '../mock/members'; // 삭제 예정
 import styles from './Login.module.scss'; // CSS 모듈 사용
+import { useRouter } from 'next/navigation'; // useRouter 훅을 사용하기 위해 import
 
 function Login() { 
+  const router = useRouter(); // useRouter 훅을 사용하여 라우터 객체를 가져옴
   
-  const [id, setId] = useState('');
-  const [password, setPassword] = useState('');
+  const [id, setId] = useState('test');
+  const [password, setPassword] = useState('1234');
   const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    // Mock API call
-    const found = members.find(m => m.id === id && m.password === password);
-    if (found) {
-      alert(`로그인 성공! 토큰: ${found.token}`);
-      localStorage.setItem("token", found.token);
-      window.location.href = "/main"; // 메인 페이지로 이동
-    } else {
-      setError('아이디 또는 비밀번호가 올바르지 않습니다.');
-    }
-     
-  };
+    try {
+      const response = await fetch('http://localhost:8080/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ "email": id, "pw": password }),
+      });
 
-  // 로그인 상태 유지 기간 옵션
-  const SESSION_DURATION = {
-    ONE_DAY: 24 * 60 * 60 * 1000, // 1일
-    SEVEN_DAYS: 7 * 24 * 60 * 60 * 1000, // 7일
-    INFINITE: null // 무한 유지
-  };
+      if (!response.ok) {
+        const data = await response.json();
+        throw new Error(data.message || '로그인 실패');
+      }
+
+      const data = await response.json();
+      const { accessToken, refreshToken } = data;
+
+      alert('로그인 성공!');
+      // 토큰값을 로컬스토리지에 저장
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      // 로그인 성공 후 메인 페이지로 이동
+      router.push('/main'); 
+    } catch (err: any) {
+      setError(err.message || '서버 오류가 발생했습니다.');
+    }
+  }; 
 
   return (
     <>
