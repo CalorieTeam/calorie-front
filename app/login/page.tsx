@@ -14,7 +14,7 @@ function Login() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
-
+    // const response = await login(id,password);
     try {
       const response = await fetch('http://localhost:8080/login', {
         method: 'POST',
@@ -24,6 +24,13 @@ function Login() {
         body: JSON.stringify({ "email": id, "pw": password }),
       });
 
+      console.log(response.ok);
+      console.log(!response.ok);
+      console.log(response.status);  
+      console.log(response.headers.get('Authorization')); // 토큰 확인
+      console.log(response.headers.get('AccessToken')); // 
+      console.log(response.headers.get('RefreshToken')); // 리프레시 토큰 확인
+      return;
       if (!response.ok) {
         const data = await response.json();
         throw new Error(data.message || '로그인 실패');
@@ -32,7 +39,7 @@ function Login() {
       const data = await response.json();
       const { accessToken, refreshToken } = data;
 
-      alert('로그인 성공!');
+      console.log('로그인 성공!');
       // 토큰값을 로컬스토리지에 저장
       localStorage.setItem('accessToken', accessToken);
       localStorage.setItem('refreshToken', refreshToken);
