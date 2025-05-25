@@ -2,12 +2,12 @@
 import { useState } from 'react';
 import { members } from '../mock/members'; // 삭제 예정
 import styles from './Login.module.scss'; // CSS 모듈 사용
-import { useRouter } from 'next/navigation'; // useRouter 훅을 사용하기 위해 import
+import { useRouter } from 'next/navigation';
 
 function Login() { 
-  const router = useRouter(); // useRouter 훅을 사용하여 라우터 객체를 가져옴
+  const router = useRouter();
   
-  const [id, setId] = useState('test');
+  const [email, setEmail] = useState('test');
   const [password, setPassword] = useState('1234');
   const [error, setError] = useState('');
 
@@ -16,36 +16,72 @@ function Login() {
     setError('');
     // const response = await login(id,password);
     try {
+      console.log('로그인 시도:', { email, pw: password });
+      
       const response = await fetch('http://localhost:8080/login', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Origin': 'http://localhost:3000'
         },
-        body: JSON.stringify({ "email": id, "pw": password }),
+        mode: 'cors',
+        credentials: 'include',
+        body: JSON.stringify({ 
+          "email": email,
+          "pw": password
+        }),
       });
 
-      console.log(response.ok);
-      console.log(!response.ok);
-      console.log(response.status);  
-      console.log(response.headers.get('Authorization')); // 토큰 확인
-      console.log(response.headers.get('AccessToken')); // 
-      console.log(response.headers.get('RefreshToken')); // 리프레시 토큰 확인
-      return;
       if (!response.ok) {
-        const data = await response.json();
-        throw new Error(data.message || '로그인 실패');
+        if (response.status === 403) {
+          throw new Error('서버 설정을 확인해주세요');
+        } else if (response.status === 401) {
+          throw new Error('아이디 또는 비밀번호가 올바르지 않습니다.');
+        } else {
+          throw new Error('로그인 처리 중 오류가 발생했습니다.');
+        }
       }
 
-      const data = await response.json();
-      const { accessToken, refreshToken } = data;
+      // 응답 본문을 텍스트로 먼저 받아서 확인
+      const responseText = await response.text();
+      console.log('응답 본문:', responseText);
 
-      console.log('로그인 성공!');
-      // 토큰값을 로컬스토리지에 저장
-      localStorage.setItem('accessToken', accessToken);
-      localStorage.setItem('refreshToken', refreshToken);
-      // 로그인 성공 후 메인 페이지로 이동
-      router.push('/main'); 
+      if (!responseText && response.status !== 200) {
+        throw new Error('서버 응답이 비어있습니다.');
+      }
+
+      let data;
+      try {
+        data = responseText ? JSON.parse(responseText) : {};
+      } catch (parseError) {
+        console.error('JSON 파싱 에러:', parseError);
+        throw new Error('서버 응답을 처리할 수 없습니다.');
+      }
+
+      console.log('로그인 성공:', data);
+      
+      // 토큰 저장 및 페이지 이동
+      if (data.accessToken && data.refreshToken) {
+        localStorage.setItem('accessToken', data.accessToken);
+        localStorage.setItem('refreshToken', data.refreshToken);
+        router.push('/main');
+      } else {
+        // 헤더에서 토큰 확인
+        const accessToken = response.headers.get('Authorization');
+        const refreshToken = response.headers.get('Refresh-Token');
+        
+        if (accessToken && refreshToken) {
+          const token = accessToken.replace('Bearer ', '');
+          localStorage.setItem('accessToken', token);
+          localStorage.setItem('refreshToken', refreshToken);
+          router.push('/main');
+        } else {
+          throw new Error('토큰 정보를 찾을 수 없습니다.');
+        }
+      }
     } catch (err: any) {
+      console.error('로그인 에러:', err);
       setError(err.message || '서버 오류가 발생했습니다.');
     }
   }; 
@@ -56,9 +92,9 @@ function Login() {
         <h2>로그인</h2>
         <input
           type="text"
-          placeholder="아이디"
-          value={id}
-          onChange={e => setId(e.target.value)}
+          placeholder="이메일"
+          value={email}
+          onChange={e => setEmail(e.target.value)}
         />
         <input
           type="password"

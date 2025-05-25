@@ -17,6 +17,43 @@ export async function refreshAccessToken() {
   }
 
   const data = await res.json();
-  localStorage.setItem('accessToken', data.accessToken);
+  localStorage.setItem('accessToken', data.accessToken); 
+  // 새 rtoken을 저장할 지 고민. ~~~
   return data.accessToken;
+}
+
+// 토큰 검사
+export async function checkAccessToken(): Promise<string | false> {
+  const accessToken = localStorage.getItem('accessToken');
+  if (!accessToken) return false;
+
+  const res = await fetch('http://localhost:8080/auth/me', {
+    method: 'GET',
+    headers: { "Authorization": `Bearer ${accessToken}` }
+  });
+
+  if (!res.ok) {
+    const data = await res.json();
+    if (res.status === 401 && data.message === "AccessTokenExpired") {
+      const newToken = await refreshAccessToken(); 
+      if (newToken) {
+        localStorage.setItem('accessToken', newToken);  // 새 토큰 저장
+        return newToken;  // 새 토큰 반환
+      }
+      return false;
+    }
+    if (res.status === 401 && data.message === "InvalidAccessToken") {
+      localStorage.removeItem('accessToken');
+      localStorage.removeItem('refreshToken');
+      window.location.href = '/login';
+      return false;
+    }
+
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    window.location.href = '/login';
+    return false;
+  }
+
+  return accessToken; // 유효하면 기존 토큰 반환
 }

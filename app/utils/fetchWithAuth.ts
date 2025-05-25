@@ -10,15 +10,17 @@ export async function fetchWithAuth(url: string, options: RequestInit = {}) {
 
   try {
     const response = await fetch(url, { ...options, headers });
+    // 403 Forbidden (토큰이 없으면)
 
-    // 만약 토큰이 만료되었다면
+    // 만약 토큰이 만료되었다면 
     if (response.status === 401) {
+      // console.log(response.message);
       const newAccessToken = await refreshAccessToken(); 
       headers.set('Authorization', `Bearer ${newAccessToken}`);
       // 만료된 토큰으로 요청을 다시 시도
       return fetch(url, {...options, headers});
+    // 유효하지 않은 토큰 (401)시 로그아웃. Invalid access token
     }
-
     return response;
   } catch (error) {
     console.error('Fetch error:', error);
